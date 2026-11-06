@@ -134,3 +134,37 @@
 5. 无头自检：`python tools/deploy/sai_send.py <pid> 98`
 
 **注意**：不要总在用户办公时把插件窗口唤到顶层截图——用户提过意见。验证优先看日志（`%TEMP%\sai_hooks_log_*.txt`）和无头自检。
+
+## 八、「拷个 DLL 就永久生效」为什么做不到（侧载实验记录）
+
+目标是让用户免注入器：在 SAI 目录放个代理 DLL，SAI 启动时自动加载它，
+再由它拉起 sai_hooks.dll。两条路都试死了：
+
+### 坑 20：显卡类 DLL 用安全方式加载，目录代理不生效
+- **做法**：编译了 dxgi.dll 代理（20 个导出全部转发给
+  `C:\Windows\System32\dxgi.dll` 真身 + DllMain 起线程加载 sai_hooks.dll），
+  拷进 SAI 目录。
+- **结果**：SAI 正常启动，但代理**完全没被加载**（枚举模块确认 dxgi 只从
+  System32 加载）。原因是 SAI 用绝对路径 / LOAD_LIBRARY_SEARCH_SYSTEM32
+  加载显卡 DLL，跳过了"程序目录优先"的规则。
+
+### 坑 21：SAI 不引用任何可劫持的普通 DLL
+- **排查**：`objdump -p sai2.exe` 看静态导入表——只有 12 个 DLL，
+  全部在 Windows KnownDLLs 名单里（kernel32/user32/gdi32/shell32 这些）。
+  KnownDLLs 由系统强制从 System32 加载，**程序目录放同名文件无效**。
+- **排查**：在 sai2.exe 字符串里搜所有 `.dll` 名字——没有任何运行时
+  按名字动态加载的 DLL（wintab 只有一个设置项字符串 "v1wintabf"，
+  不是库名；本机 System32 也确实没有 wintab32.dll）。
+- **结论**：SAI 除了 12 个系统核心库不依赖任何可按普通搜索规则
+  劫持的 DLL，侧载（DLL 代理）这条路对 SAI2 走不通。
+
+### 最终方案：静默启动器（sai_launcher.exe）
+- 图形子系统小程序（无控制台窗口），和 sai_hooks.dll 一起放 SAI 目录。
+- 双击它 → 启动 sai2.exe → 等主窗口出现 → 远程线程注入 → 自己退出。
+- 用户给桌面建个指向它的快捷方式，体验 = 双击图标开 SAI，插件已装好。
+- 用户从 sai2.exe 直接启动则仍是原版（无插件），两条路互不干扰。
+- 已实测：一次点击，日志出现「热键已注册」，模块列表里有 sai_hooks.dll。
+- **注意**：侧载实验的源码（dxgi 代理、wintab32 代理）已删除——方案已证伪，
+  留源码没有意义，结论记在本章即可。如需复现，照本章描述重写约 80 行。
+
+---

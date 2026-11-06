@@ -17,7 +17,9 @@ sai-hooks/
 │   │   ├── warp.cpp/.h     #   warp 引擎：D3D11 位移场 ping-pong、冻结、预览、写回重采样
 │   │   ├── imgui_dx11.cpp  #   swapchain/RTV 辅助
 │   │   └── sai_core.h      #   SAI 内部结构偏移（已验证的 offsets）
-│   ├── injector/           # 【生产代码】DLL 注入器（独立 exe）
+│   ├── injector/           # 【生产代码】DLL 注入器（独立 exe，备用方案用）
+│   └── launcher/           # 【生产代码】静默启动器 sai_launcher.exe（推荐方案：
+│                           #   双击它开 SAI，自动注入插件，详见 dist/使用说明.txt）
 ├── tools/                  # 构建与自动化脚本（Python），按职责分子目录
 │   ├── build/build.py      # 【主构建】MinGW-w64 编译 sai_hooks.dll
 │   ├── deploy/             # 启动注入与 IPC：sai_boot（启动+注入+过对话框）、
@@ -30,7 +32,7 @@ sai-hooks/
 ├── docs/
 │   ├── product/              # 需求文档：PRD.md、需求.md
 │   ├── architecture.md       # 【先读这个】架构说明（通俗版）：全貌、数据流、模块划分、关键决定
-│   ├── pitfalls.md           # 【再读这个】踩坑记录：19 条已踩过的坑 + 验收方法
+│   ├── pitfalls.md           # 【再读这个】踩坑记录：21 条已踩过的坑 + 验收方法
 │   ├── sai2-offsets.md       # SAI2 逆向偏移档案（结构、调用链、结论）
 │   └── dev-plan.md           # 开发计划与里程碑（历史过程文档）
 ├── bin/                    # 构建产物（git 忽略）：sai_hooks.dll / injector.exe / sai_hooks.ini
@@ -61,6 +63,10 @@ D:/tools/mingw64/bin/x86_64-w64-mingw32-g++.exe -shared -static -mwindows \
 # 注入器（杀软可能误删 bin/injector.exe，缺失时重编）
 D:/tools/mingw64/bin/x86_64-w64-mingw32-g++.exe -O2 -static -std=c++11 -municode \
   -o bin/injector.exe src/injector/injector.cpp
+
+# 静默启动器（用户分发用，图形子系统无控制台窗口）
+D:/tools/mingw64/bin/x86_64-w64-mingw32-g++.exe -O2 -static -mwindows -municode \
+  -o bin/sai_launcher.exe src/launcher/sai_launcher.cpp
 ```
 
 配置文件为 `bin/sai_hooks.ini`（热键等）。编译器路径硬编码在 `tools/build/build.py` 头部，换机器时改 `CXX` 常量。
