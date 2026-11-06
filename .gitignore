@@ -1,0 +1,29 @@
+# ===== 目标程序（体积大、有版权，不入库） =====
+\[Saier\]SAI Ver.2/
+
+# ===== 构建产物 =====
+bin/
+obj/
+*.o
+*.dll
+*.exe
+!third_party/**/*.dll
+
+# ===== 运行时产物 =====
+imgui.ini
+*sai_hooks_log*.txt
+*.tmp
+
+# ===== 逆向/调试过程产物（保留在本地 artifacts/，不入库） =====
+artifacts/
+
+# ===== Python =====
+__pycache__/
+*.pyc
+
+# ===== 编辑器/系统 =====
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
